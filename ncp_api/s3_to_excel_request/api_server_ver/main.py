@@ -15,7 +15,7 @@ app = FastAPI()
 
 @app.get("/")
 def health_check():
-    return {"status": "LG test api"}
+    return {"status": "api test"}
 
 @app.post("/s3_to_json")
 def convert_s3_to_json(info: S3Info, request: Request):
