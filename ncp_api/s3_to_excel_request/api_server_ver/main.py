@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import json
-from model.s3_to_json import s3_csv_to_json
+from module.s3_to_json import s3_csv_to_json
 
 class S3Info(BaseModel):
     access_key: Optional[str]
