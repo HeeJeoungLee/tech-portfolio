@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "statusCode": { "type": "integer" },
+
+    "result": {
+      "type": "object",
+      "properties": {
+        "file_name": { "type": "string" },
+        "file_content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": ["result"]
+    },
+    "headers": {
+      "type": "object",
+      "properties": {
+        "Content-Type": { "type": "string" }
+      }
+    }
+  },
+  "required": ["statusCode", "body", "headers"]
+}
