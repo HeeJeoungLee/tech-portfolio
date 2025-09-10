@@ -1,4 +1,4 @@
-# Weekly Scheduler
+# weekly_script_runner
 이 스크립트는 지정된 날짜들이 모두 **월요일(Monday)** 인지 검증한 뒤, 
 조건이 충족되면 `test.sh` 스크립트를 각 날짜별로 순차 실행합니다.  
 
