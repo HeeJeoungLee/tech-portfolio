@@ -53,13 +53,19 @@
 ---
 
 ## ⚙️ 실행 순서
-   ```
    1. **벡터 수집**
+   ```
    python step1__fetch_vectors.py
+   ```
    2-1. **차원 축소**
+   ```
    python step2-1__reduce_dimension.py
+   ```
    2-2. **차원 축소 알고리즘 별 시각화**
+   ```
    python step2-2__visualize_clusters.py
+   ```
    3. 클러스터 개수 분석
+   ```
    python step3__cluster_analysis.py
-    ```
+   ```
