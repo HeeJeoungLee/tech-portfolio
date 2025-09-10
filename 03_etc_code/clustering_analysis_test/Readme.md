@@ -4,6 +4,18 @@
 전체 워크플로우는 크게 **벡터 수집 → 차원 축소 → 최적 클러스터 수 분석**으로 구성됩니다.
 
 ---
+## 📂 디렉터리 구조
+
+clustering_analysis_test/
+├─ pca_50d_to_tsen_2d/
+│   ├─ step1__fetch_vectors.py
+│   ├─ step2-1__reduce_dimension.py
+│   ├─ step2-2__visualize_clusters.py
+│   └─ step3__cluster_analysis.py
+└─ umap/
+    └─ umap_kmeans_test.py
+
+---
 
 ## 📂 파일 구성
 
