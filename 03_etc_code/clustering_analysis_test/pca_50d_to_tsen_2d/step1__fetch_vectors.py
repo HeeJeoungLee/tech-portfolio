@@ -10,8 +10,8 @@ VECTOR_FIELD = "vector_field"
 
 # OpenSearch 연결 변수 설정
 opensearch_client = AsyncOpenSearch(
-    hosts=["https://10.122.2.198:9200", "https://10.122.2.199:9200"],
-    http_auth=('cloocus', 'cloocus123!'),
+    hosts=["https://{OpenSearch_manager_node_ip_1}:9200", "https://1{OpenSearch_manager_node_ip_2}:9200"],
+    http_auth=('{OpenSearch_id}', '{OpenSearch_pw}'),
     use_ssl=True,
     verify_certs=False,
     ssl_assert_hostname=False,
@@ -58,7 +58,7 @@ async def fetch_vectors(index_name: str, field: str):
 
 async def main():
     vectors = await fetch_vectors(INDEX_NAME, VECTOR_FIELD)
-    np.save("/home/cloocus/dev/heej/vector_umap_test/vectors.npy", vectors)
+    np.save("/home/user/dev/heej/vector_umap_test/vectors.npy", vectors)
     print("✅ vectors.npy 저장 완료")
 
 # # ✅ 메인 실행 함수
