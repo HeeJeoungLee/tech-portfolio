@@ -5,7 +5,7 @@
 
 ---
 ## 📂 디렉터리 구조
-
+```
 clustering_analysis_test/
 ├─ pca_50d_to_tsen_2d/
 │   ├─ step1__fetch_vectors.py
@@ -14,7 +14,7 @@ clustering_analysis_test/
 │   └─ step3__cluster_analysis.py
 └─ umap/
     └─ umap_kmeans_test.py
-
+```
 ---
 
 ## 📂 파일 구성
