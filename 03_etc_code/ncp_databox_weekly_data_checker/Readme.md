@@ -11,10 +11,13 @@ DataBox에서 제공된 데이터는 NAS 경로에 적재되고, 이후 자동�
 -- weekly_data_checker  
    └─ databox_weekly_check.py   # 메인 Python 스크립트  
 ```
+
 ---
 
 ## ⚠️특이사항
 이 코드는 네이버 클라우드 데이터박스 환경의 python 버전(2.7)에 맞게 제작되었습니다.
+
+---
 
 ## ⚙️ 주요 기능
 1. **날짜 생성 (generate_dates)**  
