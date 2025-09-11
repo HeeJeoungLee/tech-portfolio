@@ -3,6 +3,11 @@ import os
 import subprocess
 from datetime import datetime, timedelta
 
+databox_name = ""
+path_ver = "v3"
+ncp_pro_search_path = "/mnt/pro25y2h/v3/search"
+ncp_pro_shopping_path = "/mnt/pro25y2h/v3/shopping"
+
 # 날짜 리스트 생성
 def generate_dates(start_date, end_date):
     start = datetime. strptime(start_date, "%Y-%m-%d")
@@ -23,10 +28,10 @@ def write_and_run(cmd, file):
     file.write(result)
 
 # Linux & Hadoop 명령어 실행
-def execute_by_command_type(dates, output_file, date_dir):
+def execute_by_command_type(dates, output_file):
     path_pairs = [
-        ("search", "/mnt/{}/v3/search/click".format(date_dir), "/data_v2/pro_search/click"),
-        ("shopping", "/mnt/{}/v3/shopping/click".format(date_dir), "/data_v2/pro_shopping/click"),
+        ("search", "{}/click".format(ncp_pro_search_path), "/data_{}/pro_search/click".format(path_ver)),
+        ("shopping", "{}/click".format(ncp_pro_shopping_path), "/data_{}/pro_shopping/click".format(path_ver)),
     ]
     command_specs = [
         ("linux_du", "du -sh {}/{} | awk '{{print $1}}'"),
@@ -46,35 +51,33 @@ def execute_by_command_type(dates, output_file, date_dir):
                     write_and_run(cmd, f)
 
 # Hue 쿼리 실행
-def execute_hue_query(output_file, start_date, end_date, database_name):
+def execute_hue_query(output_file, start_date, end_date, databox_name_name):
     queries = [
         ("search_click", """
-            SELECT `date`, count(*) FROM {}.pro_search_click_v2 
-            WHERE `date` BETWEEN "{}" AND "{}" GROUP BY `date`
-        """.format(database_name, start_date, end_date)),
+            SELECT `date`, count(*) FROM {}.pro_search_click_{} WHERE `date` BETWEEN "{}" AND "{}" GROUP BY `date`
+        """.format(databox_name_name, path_ver, start_date, end_date)),
         ("shopping_click", """
-            SELECT `date`, count(*) FROM {}.pro_shopping_click_v2 
-            WHERE `date` BETWEEN "{}" AND "{}" GROUP BY `date`
-        """.format(database_name,start_date, end_date))
+            SELECT `date`, count(*) FROM {}.pro_shopping_click_{} WHERE `date` BETWEEN "{}" AND "{}" GROUP BY `date`
+        """.format(databox_name_name,start_date, end_date))
     ]
 
     for label, query in queries:
-        cmd = "beeline -u 'jdbc:hive2://m-001-hadoop:10000/{}' -e \"{}\"".format(database_name, query)
+        cmd = "beeline -u 'jdbc:hive2://m-001-hadoop:10000/{}' -e \"{}\"".format(databox_name_name, query)
 
         try:
             result = subprocess.check_output(cmd, shell=True, universal_newlines=True)
             lines = result.splitlines()
             data_lines = []
-
             inside_table = False
+
             for line in lines:
                 if line.startswith("+") and not inside_table:
                     inside_table = True
-                    continue
-                elif line.startswith("+") and inside_table:
-                    break
+                    data_lines.append(line)
                 elif inside_table:
                     data_lines.append(line)
+                    if line.strip().startswith("+") and len (data_lines) > 3:
+                        break
 
             with open(output_file, "a") as f:
                 f.write("\n === [Hue Query Result: {}] === \n".format(label))
@@ -83,9 +86,9 @@ def execute_hue_query(output_file, start_date, end_date, database_name):
 
         except subprocess.CalledProcessError as e:
             with open(output_file, "a") as f:
-                f.write("\n[ERROR] Hue query failed for [{}]\n".format(label))
-                f.write("Return Code: {}\n".format(e.returncode))
-                f.write("Output: {}\n".format(e.output))
+                print("\n[ERROR] Hue query failed for [{}]\n".format(label))
+                print("Return Code: {}\n".format(e.returncode))
+                print("Output: {}\n".format(e.output))
 
 def execute_hdfs_report_summary(output_file):
     try:
@@ -114,21 +117,19 @@ def execute_hdfs_report_summary(output_file):
 # 메인
 def main():
     #############################
-    date_dir = "pro25y1h"
-    start_date = "2025-06-20"
-    end_date = "2025-06-22"
+    start_date = "2025-07-14"
+    end_date = "2025-07-20"
     #############################
     
-    database_name = ""
     dates = generate_dates(start_date, end_date)
 
     timestamp = datetime.now().strftime("%Y%m%d")
-    output_file = "/mnt/nasw1/heej/{}_{}_weekly_check.txt".format(database_name, timestamp)
+    output_file = "/mnt/nasw1/heej/{}_{}_weekly_check.txt".format(databox_name, timestamp)
 
-    execute_by_command_type(dates, output_file, date_dir)
-    execute_hue_query(output_file, start_date, end_date, database_name)
+    execute_by_command_type(dates, output_file)
+    execute_hue_query(output_file, start_date, end_date)
     execute_hdfs_report_summary(output_file)
-    print("[{}] weekly data check done: {}".format(database_name, output_file))
+    print("[{}] weekly data check done: {}".format(databox_name, output_file))
 
 if __name__ == "__main__":
     main()

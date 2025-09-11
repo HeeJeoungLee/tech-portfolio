@@ -8,8 +8,10 @@ DataBox에서 제공된 데이터는 NAS 경로에 적재되고, 이후 자동�
 
 ## 📂 폴더 구조
 ```
--- weekly_data_checker  
-   └─ databox_weekly_check.py   # 메인 Python 스크립트  
+-- ncp_databox_data_checker 
+   ├─ databox_weekly_check.py # 주간 데이터 검수 
+   ├─ databox_montly_check.py # 월간 데이터 검수 
+   └─ databox_20250911_weekly_check.txt # 코드 실행 결과 파일
 ```
 
 ---
@@ -37,7 +39,7 @@ DataBox에서 제공된 데이터는 NAS 경로에 적재되고, 이후 자동�
    - `hdfs dfsadmin -report` 명령을 실행해 HDFS 전체 상태(DFS Remaining, DFS Used, DFS Used%)를 요약 저장합니다.  
 
 5. **검수 결과 저장**  
-   - 실행 결과는 `/mnt/nasw1/heej/{database_name}_{YYYYMMDD}_weekly_check.txt` 파일에 기록됩니다.  
+   - 실행 결과는 `/mnt/nasw1/heej/{databox_name_name}_{YYYYMMDD}_weekly_check.txt` 파일에 기록됩니다.  
 
 ---
 

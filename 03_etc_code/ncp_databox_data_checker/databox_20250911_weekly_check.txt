@@ -1,0 +1,98 @@
+=== [pro_search] COMMAND RESULT ===
+--- [1inux_du] ---
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-01 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-02 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-03 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-04 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-05 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-06 | awk '{print $1}'     1.3G
+$ du -sh /mnt/pro25y2h/v3/search/click/date=2025-09-07 | awk '{print $1}'     1.3G
+--- [hadoop_du] ---
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-01 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-02 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-03 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-04 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-05 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-06 | awk '{print $1 $2}'     1.2G
+$ hadoop fs -du -s -h /data_v3/pro_search/click/date=2025-09-07 | awk '{print $1 $2}'     1.2G
+--- [linux_find] ----
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-01 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-02 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-03 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-04 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-05 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-06 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/search/click/date=2025-09-07 -type f | wc -l      32
+--- [hadoop_count] ---
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-01 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-02 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-03 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-04 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-05 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-06 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_search/click/date=2025-09-07 | awk '{print $2}'     32
+
+=== [pro_shopping] COMMAND RESULT ===
+--- [1inux_du] ---
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-01 | awk '{print $1}'     34M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-02 | awk '{print $1}'     34M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-03 | awk '{print $1}'     32M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-04 | awk '{print $1}'     31M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-05 | awk '{print $1}'     27M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-06 | awk '{print $1}'     29M
+$ du -sh /mnt/pro25y2h/v3/shopping/click/date=2025-09-07 | awk '{print $1}'     34M
+--- [hadoop_du] ---
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-01 | awk '{print $1 $2}'     32.7M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-02 | awk '{print $1 $2}'     33.0M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-03 | awk '{print $1 $2}'     30.9M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-04 | awk '{print $1 $2}'     29.9M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-05 | awk '{print $1 $2}'     26.0M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-06 | awk '{print $1 $2}'     27.7M
+$ hadoop fs -du -s -h /data_v3/pro_shopping/click/date=2025-09-07 | awk '{print $1 $2}'     33.1M
+--- [linux_find] ---
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-01 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-02 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-03 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-04 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-05 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-06 -type f | wc -l      32
+$ find /mnt/pro25y2h/v3/shopping/click/date=2025-09-07 -type f | wc -l      32
+--- [hadoop_count] ---
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-01 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-02 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-03 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-04 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-05 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-06 | awk '{print $2}'     32
+$ hadoop fs -count /data_v3/pro_shopping/click/date=2025-09-07 | awk '{print $2}'     32
+
+=== [pro_search_click] Hue COMMAND RESULT ===
++------------+----------+
+| date       |    _c1   |
++------------+----------+
+| 2025-09-01 | 77643227 |
+| 2025-09-02 | 73974690 |
+| 2025-09-03 | 75382093 |
+| 2025-09-04 | 74404636 |
+| 2025-09-05 | 73361377 |
+| 2025-09-06 | 77303208 |
+| 2025-09-07 | 76131897 |
++------------+----------+
+
+=== [pro_shopping_click] Hue COMMAND RESULT ===
++------------+----------+
+| date       |    _c1   |
++------------+----------+
+| 2025-09-01 | 1833536  |
+| 2025-09-02 | 1743748  |
+| 2025-09-03 | 1721799  |
+| 2025-09-04 | 1678118  |
+| 2025-09-05 | 1508934  |
+| 2025-09-06 | 1582537  |
+| 2025-09-07 | 1922099  |
++------------+----------+
+
+=== [HDFS DFSAdmin report Summary] ===
+DFS Remaining: 3062847309160 (27.85 TB)
+DFS Used: 33606226672220 (30.56 TB)
+DFS Used%: 52.32%
