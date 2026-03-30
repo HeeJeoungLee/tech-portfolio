@@ -14,12 +14,13 @@ app = Flask(__name__)
 
 def post_to_discord(message: str) -> dict:
     """Discord 채널에 웹훅을 사용하여 메시지를 보냅니다."""
+    print("[Debug] Discord 포스팅 시도 중...")
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
     if not webhook_url:
         return {"status": "error", "message": "Discord 웹훅 URL이 설정되지 않았습니다."}
     
     try:
-        response = requests.post(webhook_url, json={"content": message})
+        response = requests.post(webhook_url, json={"content": message}, timeout=10)
         response.raise_for_status()
         return {"status": "success", "message": "Discord에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
@@ -27,10 +28,14 @@ def post_to_discord(message: str) -> dict:
 
 def post_to_twitter(message: str) -> dict:
     """X (Twitter)에 API v2를 사용하여 트윗을 게시합니다."""
+    print("[Debug] X (Twitter) 포스팅 시도 중...")
     api_key = os.getenv("TWITTER_API_KEY")
     api_secret = os.getenv("TWITTER_API_SECRET")
     access_token = os.getenv("TWITTER_ACCESS_TOKEN")
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+
+    print(f"[Debug] Twitter API Key 확인: {str(api_key)[:5]}...")
+    print(f"[Debug] Twitter Access Token 확인: {str(access_token)[:5]}...")
 
     if not all([api_key, api_secret, access_token, access_token_secret]):
         return {"status": "error", "message": "X(Twitter) API 키가 모두 설정되지 않았습니다."}
@@ -49,6 +54,7 @@ def post_to_twitter(message: str) -> dict:
 
 def post_to_naver_cafe(message: str) -> dict:
     """네이버 카페에 API를 사용하여 게시글을 작성합니다."""
+    print("[Debug] Naver Cafe 포스팅 시도 중...")
     client_id = os.getenv("NAVER_CLIENT_ID")
     client_secret = os.getenv("NAVER_CLIENT_SECRET")
     access_token = os.getenv("NAVER_ACCESS_TOKEN")
@@ -65,6 +71,11 @@ def post_to_naver_cafe(message: str) -> dict:
     content = '\n'.join(lines[1:]) if len(lines) > 1 else subject
 
     url = f"https://openapi.naver.com/v1/cafe/{cafe_id}/menu/{menu_id}/articles"
+    
+    print(f"[Debug] Naver URL 확인: {url}")
+    print(f"[Debug] Naver Token 미리보기: {access_token[:15]}...")
+    print(f"[Debug] Naver 제목 확인: {subject}")
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
@@ -76,7 +87,7 @@ def post_to_naver_cafe(message: str) -> dict:
     }
 
     try:
-        response = requests.post(url, headers=headers, data=data)
+        response = requests.post(url, headers=headers, data=data, timeout=10)
         response.raise_for_status()
         return {"status": "success", "message": "네이버 카페에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
@@ -93,6 +104,7 @@ def index():
 @app.route("/post", methods=["POST"])
 def handle_post():
     """클라이언트로부터 메시지를 받아 각 채널에 포스팅합니다."""
+    print("\n[Debug] 클라이언트로부터 /post 요청을 받았습니다.")
     data = request.get_json()
     message = data.get("content")
 
@@ -104,6 +116,7 @@ def handle_post():
         "twitter": post_to_twitter(message),
         "naver_cafe": post_to_naver_cafe(message),
     }
+    print("[Debug] 모든 포스팅 완료. 결과를 클라이언트로 반환합니다.")
     return jsonify(results)
 
 # --- 네이버 API 토큰 발급 라우트 ---
