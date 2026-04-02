@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # --- 각 SNS 채널별 포스팅 함수 ---
 
-def post_to_discord(message: str, image_path: str = None) -> dict:
+def post_to_discord(message: str, image_paths: list = None) -> dict:
     """Discord 채널에 웹훅을 사용하여 메시지를 보냅니다."""
     print("[Debug] Discord 포스팅 시도 중...")
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
@@ -20,9 +20,18 @@ def post_to_discord(message: str, image_path: str = None) -> dict:
         return {"status": "error", "message": "Discord 웹훅 URL이 설정되지 않았습니다."}
     
     try:
-        if image_path:
-            with open(image_path, "rb") as f:
-                response = requests.post(webhook_url, data={"content": message}, files={"file": f}, timeout=10)
+        if image_paths:
+            opened_files = []
+            files_dict = {}
+            for i, path in enumerate(image_paths):
+                f = open(path, "rb")
+                opened_files.append(f)
+                files_dict[f"file{i}"] = f
+            try:
+                response = requests.post(webhook_url, data={"content": message}, files=files_dict, timeout=10)
+            finally:
+                for f in opened_files:
+                    f.close()
         else:
             response = requests.post(webhook_url, json={"content": message}, timeout=10)
         response.raise_for_status()
@@ -30,7 +39,7 @@ def post_to_discord(message: str, image_path: str = None) -> dict:
     except requests.exceptions.RequestException as e:
         return {"status": "error", "message": f"Discord 포스팅 실패: {e}"}
 
-def post_to_twitter(message: str, image_path: str = None) -> dict:
+def post_to_twitter(message: str, image_paths: list = None) -> dict:
     """X (Twitter)에 API v2를 사용하여 트윗을 게시합니다."""
     print("[Debug] X (Twitter) 포스팅 시도 중...")
     api_key = os.getenv("TWITTER_API_KEY")
@@ -51,15 +60,18 @@ def post_to_twitter(message: str, image_path: str = None) -> dict:
             access_token=access_token,
             access_token_secret=access_token_secret
         )
-        if image_path:
+        if image_paths:
             # 트위터는 미디어 업로드를 위해 v1.1 API를 통해 먼저 업로드 후 트윗에 붙여야 합니다.
             auth = tweepy.OAuth1UserHandler(
                 consumer_key=api_key, consumer_secret=api_secret,
                 access_token=access_token, access_token_secret=access_token_secret
             )
             api = tweepy.API(auth)
-            media = api.media_upload(filename=image_path)
-            client.create_tweet(text=message, media_ids=[media.media_id])
+            media_ids = []
+            for path in image_paths:
+                media = api.media_upload(filename=path)
+                media_ids.append(media.media_id)
+            client.create_tweet(text=message, media_ids=media_ids)
         else:
             client.create_tweet(text=message)
             
@@ -70,7 +82,7 @@ def post_to_twitter(message: str, image_path: str = None) -> dict:
             return {"status": "error", "message": "트위터 402 에러 : 크레딧이 부족합니다"}
         return {"status": "error", "message": f"X(Twitter) 트윗 실패: {error_msg}"}
 
-def post_to_naver_cafe(message: str, image_path: str = None) -> dict:
+def post_to_naver_cafe(message: str, image_paths: list = None) -> dict:
     """네이버 카페에 API를 사용하여 게시글을 작성합니다."""
     print("[Debug] Naver Cafe 포스팅 시도 중...")
     client_id = os.getenv("NAVER_CLIENT_ID")
@@ -95,7 +107,7 @@ def post_to_naver_cafe(message: str, image_path: str = None) -> dict:
     print(f"[Debug] Naver 제목 확인: {subject}")
 
     try: 
-        if image_path:
+        if image_paths:
             headers = {"Authorization": f"Bearer {access_token}"}
             
             # [중요] 이미지 첨부(multipart) 시 네이버 서버는 이중 인코딩을 해석하지 못하고 무조건 CP949(MS949)로 읽습니다.
@@ -104,12 +116,20 @@ def post_to_naver_cafe(message: str, image_path: str = None) -> dict:
             data = {'subject': subject.encode('cp949', 'replace'), 'content': content.encode('cp949', 'replace')}
             
             import mimetypes
-            mime_type, _ = mimetypes.guess_type(image_path)
+            opened_files = []
+            files_list = []
             
-            with open(image_path, 'rb') as f:
-                # 명시적인 MIME 타입을 지정하여 이미지가 누락되거나 거부되는 현상 방지
-                files = [('image', (os.path.basename(image_path), f, mime_type or 'image/jpeg'))]
-                response = requests.post(url, headers=headers, data=data, files=files, timeout=10)
+            for path in image_paths:
+                mime_type, _ = mimetypes.guess_type(path)
+                f = open(path, 'rb')
+                opened_files.append(f)
+                files_list.append(('image', (os.path.basename(path), f, mime_type or 'image/jpeg')))
+            
+            try:
+                response = requests.post(url, headers=headers, data=data, files=files_list, timeout=10)
+            finally:
+                for f in opened_files:
+                    f.close()
         else:
             headers = {
                 "Authorization": f"Bearer {access_token}",
@@ -125,7 +145,10 @@ def post_to_naver_cafe(message: str, image_path: str = None) -> dict:
         response.raise_for_status()
         return {"status": "success", "message": "네이버 카페에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
-        return {"status": "error", "message": f"네이버 카페 포스팅 실패: {e.response.text}"}
+        error_text = e.response.text if e.response else str(e)
+        if "024" in error_text:
+            return {"status": "error", "message": "네이버 토큰이 만료되었습니다. 상단의 [네이버 API 토큰 발급/갱신하기] 버튼을 눌러주세요."}
+        return {"status": "error", "message": f"네이버 카페 포스팅 실패: {error_text}"}
 
 
 # --- Flask 라우트 ---
@@ -146,26 +169,36 @@ def handle_post():
     if not message:
         return jsonify({"status": "error", "message": "내용이 없습니다."}), 400
 
-    image_file = request.files.get("image")
-    image_path = None
+    image_files = request.files.getlist("images")
+    image_paths = []
 
-    if image_file and image_file.filename:
+    if image_files:
         import tempfile
-        from werkzeug.utils import secure_filename
+        import uuid
         
-        filename = secure_filename(image_file.filename) or "temp_image.jpg"
-        image_path = os.path.join(tempfile.gettempdir(), filename)
-        image_file.save(image_path)
-        print(f"[Debug] 이미지 임시 저장 완료: {image_path}")
+        for image_file in image_files:
+            if image_file and image_file.filename:
+                # secure_filename은 한글을 지워버려 확장자가 사라지는 문제(예: '사진.png' -> 'png')가 있습니다.
+                # 따라서 원본에서 확장자만 추출하여 안전한 고유 이름(UUID)을 만듭니다.
+                ext = os.path.splitext(image_file.filename)[1]
+                if not ext:
+                    ext = ".jpg"
+                unique_filename = f"{uuid.uuid4().hex}{ext}"
+                image_path = os.path.join(tempfile.gettempdir(), unique_filename)
+                image_file.save(image_path)
+                image_paths.append(image_path)
+                print(f"[Debug] 이미지 임시 저장 완료: {image_path}")
 
     results = {
-        "discord": post_to_discord(message, image_path),
-        "twitter": post_to_twitter(message, image_path),
-        "naver_cafe": post_to_naver_cafe(message, image_path),
+        "discord": post_to_discord(message, image_paths),
+        "twitter": post_to_twitter(message, image_paths),
+        "naver_cafe": post_to_naver_cafe(message, image_paths),
     }
     
-    if image_path and os.path.exists(image_path):
-        os.remove(image_path)  # 포스팅 완료 후 서버에 남은 임시 이미지 삭제
+    for image_path in image_paths:
+        if os.path.exists(image_path):
+            os.remove(image_path)  # 포스팅 완료 후 서버에 남은 임시 이미지 삭제
+            print(f"[Debug] 임시 이미지 파일 삭제 완료: {image_path}")
 
     print("[Debug] 모든 포스팅 완료. 결과를 클라이언트로 반환합니다.")
     return jsonify(results)

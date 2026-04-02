@@ -12,17 +12,11 @@
         <p>이곳에 글을 작성하면 Discord, X(Twitter), Naver Cafe에 동시에 포스팅됩니다.</p>
         
         <div class="auth-section">
-            <a href="/naver_auth" class="auth-btn">네이버 API 토큰 발급하기 (1회 필수)</a>
-            <p class="small-text">* 브라우저를 통해 네이버 로그인을 진행하고 Access Token을 자동으로 .env에 저장합니다.</p>
+            <a href="/naver_auth" class="auth-btn">네이버 API 토큰 발급 / 갱신하기</a>
+            <p class="small-text">* 네이버 토큰은 약 1시간 후 만료되므로 전송 실패 시 다시 발급받아야 합니다.</p>
         </div>
 
         <textarea id="post-content" placeholder="여기에 포스팅할 내용을 입력하세요..."></textarea>
-        
-        <div class="file-upload-section">
-            <label for="post-image">이미지 첨부 (최대 4개):</label>
-            <input type="file" id="post-image" accept="image/*" multiple>
-        </div>
-
         <button id="submit-btn">전송</button>
 
         <div id="status-container">
@@ -36,7 +30,6 @@
     <script>
         document.getElementById('submit-btn').addEventListener('click', async () => {
             const content = document.getElementById('post-content').value;
-            const imageFiles = document.getElementById('post-image').files;
             const submitBtn = document.getElementById('submit-btn');
             const resultsDiv = document.getElementById('results');
 
@@ -45,26 +38,17 @@
                 return;
             }
 
-            if (imageFiles.length > 4) {
-                alert('이미지는 최대 4개까지 첨부할 수 있습니다.');
-                return;
-            }
-
             submitBtn.disabled = true;
             submitBtn.textContent = '전송 중...';
             resultsDiv.innerHTML = '';
 
             try {
-                // 이미지 파일 전송을 위해 데이터를 FormData 형식으로 담습니다.
-                const formData = new FormData();
-                formData.append('content', content);
-                for (let i = 0; i < imageFiles.length; i++) {
-                    formData.append('images', imageFiles[i]);
-                }
-
                 const response = await fetch('/post', {
                     method: 'POST',
-                    body: formData, // FormData를 넣으면 Content-Type이 자동으로 설정됩니다.
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content }),
                 });
 
                 const results = await response.json();
