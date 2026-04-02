@@ -1,7 +1,7 @@
 import os
 import requests
 import tweepy
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote
 from flask import Flask, render_template, request, jsonify, redirect
 from dotenv import load_dotenv, set_key
 
@@ -50,7 +50,10 @@ def post_to_twitter(message: str) -> dict:
         client.create_tweet(text=message)
         return {"status": "success", "message": "X(Twitter)에 성공적으로 트윗했습니다."}
     except Exception as e:
-        return {"status": "error", "message": f"X(Twitter) 트윗 실패: {e}"}
+        error_msg = str(e)
+        if "402" in error_msg:
+            return {"status": "error", "message": "트위터 402 에러 : 크레딧이 부족합니다"}
+        return {"status": "error", "message": f"X(Twitter) 트윗 실패: {error_msg}"}
 
 def post_to_naver_cafe(message: str) -> dict:
     """네이버 카페에 API를 사용하여 게시글을 작성합니다."""
@@ -78,16 +81,19 @@ def post_to_naver_cafe(message: str) -> dict:
 
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
     }
-    # API는 'subject'와 'content'를 필수로 요구합니다.
-    data = {
-        'subject': subject,
-        'content': content
-    }
+    
+    # 네이버 카페 API의 고질적인 한글 깨짐 문제를 해결하기 위한 이중 URL 인코딩
+    # 텍스트 -> URL 인코딩 -> 한 번 더 URL 인코딩 (% -> %25)
+    double_encoded_subject = quote(quote(subject))
+    double_encoded_content = quote(quote(content))
+    
+    # key=value&key2=value2 형태로 조립 후 바이트로 변환
+    payload = f"subject={double_encoded_subject}&content={double_encoded_content}".encode('utf-8')
 
-    try:
-        response = requests.post(url, headers=headers, data=data, timeout=10)
+    try: 
+        response = requests.post(url, headers=headers, data=payload, timeout=10)
         response.raise_for_status()
         return {"status": "success", "message": "네이버 카페에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
