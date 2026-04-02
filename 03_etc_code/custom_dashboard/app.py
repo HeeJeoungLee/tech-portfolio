@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 # --- 각 SNS 채널별 포스팅 함수 ---
 
-def post_to_discord(message: str) -> dict:
+def post_to_discord(message: str, image_path: str = None) -> dict:
     """Discord 채널에 웹훅을 사용하여 메시지를 보냅니다."""
     print("[Debug] Discord 포스팅 시도 중...")
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
@@ -20,13 +20,17 @@ def post_to_discord(message: str) -> dict:
         return {"status": "error", "message": "Discord 웹훅 URL이 설정되지 않았습니다."}
     
     try:
-        response = requests.post(webhook_url, json={"content": message}, timeout=10)
+        if image_path:
+            with open(image_path, "rb") as f:
+                response = requests.post(webhook_url, data={"content": message}, files={"file": f}, timeout=10)
+        else:
+            response = requests.post(webhook_url, json={"content": message}, timeout=10)
         response.raise_for_status()
         return {"status": "success", "message": "Discord에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
         return {"status": "error", "message": f"Discord 포스팅 실패: {e}"}
 
-def post_to_twitter(message: str) -> dict:
+def post_to_twitter(message: str, image_path: str = None) -> dict:
     """X (Twitter)에 API v2를 사용하여 트윗을 게시합니다."""
     print("[Debug] X (Twitter) 포스팅 시도 중...")
     api_key = os.getenv("TWITTER_API_KEY")
@@ -47,7 +51,18 @@ def post_to_twitter(message: str) -> dict:
             access_token=access_token,
             access_token_secret=access_token_secret
         )
-        client.create_tweet(text=message)
+        if image_path:
+            # 트위터는 미디어 업로드를 위해 v1.1 API를 통해 먼저 업로드 후 트윗에 붙여야 합니다.
+            auth = tweepy.OAuth1UserHandler(
+                consumer_key=api_key, consumer_secret=api_secret,
+                access_token=access_token, access_token_secret=access_token_secret
+            )
+            api = tweepy.API(auth)
+            media = api.media_upload(filename=image_path)
+            client.create_tweet(text=message, media_ids=[media.media_id])
+        else:
+            client.create_tweet(text=message)
+            
         return {"status": "success", "message": "X(Twitter)에 성공적으로 트윗했습니다."}
     except Exception as e:
         error_msg = str(e)
@@ -55,7 +70,7 @@ def post_to_twitter(message: str) -> dict:
             return {"status": "error", "message": "트위터 402 에러 : 크레딧이 부족합니다"}
         return {"status": "error", "message": f"X(Twitter) 트윗 실패: {error_msg}"}
 
-def post_to_naver_cafe(message: str) -> dict:
+def post_to_naver_cafe(message: str, image_path: str = None) -> dict:
     """네이버 카페에 API를 사용하여 게시글을 작성합니다."""
     print("[Debug] Naver Cafe 포스팅 시도 중...")
     client_id = os.getenv("NAVER_CLIENT_ID")
@@ -79,21 +94,34 @@ def post_to_naver_cafe(message: str) -> dict:
     print(f"[Debug] Naver Token 미리보기: {access_token[:15]}...")
     print(f"[Debug] Naver 제목 확인: {subject}")
 
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
-    }
-    
-    # 네이버 카페 API의 고질적인 한글 깨짐 문제를 해결하기 위한 이중 URL 인코딩
-    # 텍스트 -> URL 인코딩 -> 한 번 더 URL 인코딩 (% -> %25)
-    double_encoded_subject = quote(quote(subject))
-    double_encoded_content = quote(quote(content))
-    
-    # key=value&key2=value2 형태로 조립 후 바이트로 변환
-    payload = f"subject={double_encoded_subject}&content={double_encoded_content}".encode('utf-8')
-
     try: 
-        response = requests.post(url, headers=headers, data=payload, timeout=10)
+        if image_path:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            
+            # [중요] 이미지 첨부(multipart) 시 네이버 서버는 이중 인코딩을 해석하지 못하고 무조건 CP949(MS949)로 읽습니다.
+            # 텍스트 전용 전송과 달리, 이 경우에는 반드시 텍스트를 cp949 바이트로 변환해서 보내야 한글이 깨지지 않습니다.
+            # 'replace' 옵션은 이모지 등 CP949에 없는 문자가 있을 때 에러 대신 '?'로 바꿔 전송하게 해줍니다.
+            data = {'subject': subject.encode('cp949', 'replace'), 'content': content.encode('cp949', 'replace')}
+            
+            import mimetypes
+            mime_type, _ = mimetypes.guess_type(image_path)
+            
+            with open(image_path, 'rb') as f:
+                # 명시적인 MIME 타입을 지정하여 이미지가 누락되거나 거부되는 현상 방지
+                files = [('image', (os.path.basename(image_path), f, mime_type or 'image/jpeg'))]
+                response = requests.post(url, headers=headers, data=data, files=files, timeout=10)
+        else:
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+            }
+            # 네이버 카페 API의 고질적인 한글 깨짐 문제를 해결하기 위한 이중 URL 인코딩
+            double_encoded_subject = quote(quote(subject))
+            double_encoded_content = quote(quote(content))
+            
+            payload = f"subject={double_encoded_subject}&content={double_encoded_content}".encode('utf-8')
+            response = requests.post(url, headers=headers, data=payload, timeout=10)
+            
         response.raise_for_status()
         return {"status": "success", "message": "네이버 카페에 성공적으로 포스팅했습니다."}
     except requests.exceptions.RequestException as e:
@@ -111,17 +139,34 @@ def index():
 def handle_post():
     """클라이언트로부터 메시지를 받아 각 채널에 포스팅합니다."""
     print("\n[Debug] 클라이언트로부터 /post 요청을 받았습니다.")
-    data = request.get_json()
-    message = data.get("content")
+    
+    # JSON 대신 FormData로 이미지를 함께 받습니다.
+    message = request.form.get("content")
 
     if not message:
         return jsonify({"status": "error", "message": "내용이 없습니다."}), 400
 
+    image_file = request.files.get("image")
+    image_path = None
+
+    if image_file and image_file.filename:
+        import tempfile
+        from werkzeug.utils import secure_filename
+        
+        filename = secure_filename(image_file.filename) or "temp_image.jpg"
+        image_path = os.path.join(tempfile.gettempdir(), filename)
+        image_file.save(image_path)
+        print(f"[Debug] 이미지 임시 저장 완료: {image_path}")
+
     results = {
-        "discord": post_to_discord(message),
-        "twitter": post_to_twitter(message),
-        "naver_cafe": post_to_naver_cafe(message),
+        "discord": post_to_discord(message, image_path),
+        "twitter": post_to_twitter(message, image_path),
+        "naver_cafe": post_to_naver_cafe(message, image_path),
     }
+    
+    if image_path and os.path.exists(image_path):
+        os.remove(image_path)  # 포스팅 완료 후 서버에 남은 임시 이미지 삭제
+
     print("[Debug] 모든 포스팅 완료. 결과를 클라이언트로 반환합니다.")
     return jsonify(results)
 

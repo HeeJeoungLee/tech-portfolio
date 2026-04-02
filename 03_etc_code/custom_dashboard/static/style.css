@@ -68,6 +68,22 @@ textarea {
     resize: vertical;
 }
 
+.file-upload-section {
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.file-upload-section label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
 button {
     display: block;
     width: 100%;

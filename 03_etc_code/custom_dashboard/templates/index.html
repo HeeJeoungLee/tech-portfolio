@@ -17,6 +17,12 @@
         </div>
 
         <textarea id="post-content" placeholder="여기에 포스팅할 내용을 입력하세요..."></textarea>
+        
+        <div class="file-upload-section">
+            <label for="post-image">이미지 첨부 (선택):</label>
+            <input type="file" id="post-image" accept="image/*">
+        </div>
+
         <button id="submit-btn">전송</button>
 
         <div id="status-container">
@@ -30,6 +36,7 @@
     <script>
         document.getElementById('submit-btn').addEventListener('click', async () => {
             const content = document.getElementById('post-content').value;
+            const imageFile = document.getElementById('post-image').files[0];
             const submitBtn = document.getElementById('submit-btn');
             const resultsDiv = document.getElementById('results');
 
@@ -43,12 +50,16 @@
             resultsDiv.innerHTML = '';
 
             try {
+                // 이미지 파일 전송을 위해 데이터를 FormData 형식으로 담습니다.
+                const formData = new FormData();
+                formData.append('content', content);
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
                 const response = await fetch('/post', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ content: content }),
+                    body: formData, // FormData를 넣으면 Content-Type이 자동으로 설정됩니다.
                 });
 
                 const results = await response.json();
